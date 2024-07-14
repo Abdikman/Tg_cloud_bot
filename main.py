@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-import Logging
+import logging
 import os
 import re
 import sys
@@ -18,7 +18,7 @@ from Handles.action import rename_file, file_to_user, delete_file
 from Keyboards.Keyboads import keyboard, keyboard2, keyboard_action, name_inline_keyboard, MyCallback, name_inline_keyboard_date, \
     MyCallback_for_date, name_inline_keyboard_type, MyCallback_for_type
 from Handles.download_path import document_path, photo_path, video_path, audio_path
-from Logging.logging_history import history_update, delete_history
+from Logging_bot.logging_history import history_update, delete_history
 
 
 load_dotenv("config/.env")
@@ -391,5 +391,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    Logging.basicConfig(level=Logging.INFO, stream=sys.stdout)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     asyncio.run(main())
