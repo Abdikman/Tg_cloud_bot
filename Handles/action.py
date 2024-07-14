@@ -1,4 +1,4 @@
-from logging_history import history_update
+from Logging.logging_history import history_update
 import os
 
 async def rename_file(message, data):

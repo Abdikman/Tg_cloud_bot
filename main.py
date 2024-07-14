@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-import logging
+import Logging
 import os
 import re
 import sys
@@ -14,11 +14,11 @@ from aiogram.types import Message, CallbackQuery
 from dotenv import load_dotenv
 
 from Bot_states.bot_state import file_name_input, file_action
-from action import rename_file, file_to_user, delete_file
+from Handles.action import rename_file, file_to_user, delete_file
 from Keyboards.Keyboads import keyboard, keyboard2, keyboard_action, name_inline_keyboard, MyCallback, name_inline_keyboard_date, \
     MyCallback_for_date, name_inline_keyboard_type, MyCallback_for_type
-from download_path import document_path, photo_path, video_path, audio_path
-from logging_history import history_update, delete_history
+from Handles.download_path import document_path, photo_path, video_path, audio_path
+from Logging.logging_history import history_update, delete_history
 
 
 load_dotenv("config/.env")
@@ -391,5 +391,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    Logging.basicConfig(level=Logging.INFO, stream=sys.stdout)
     asyncio.run(main())
