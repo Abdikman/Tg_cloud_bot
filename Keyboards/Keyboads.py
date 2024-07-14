@@ -14,7 +14,7 @@ def keyboard2():
     builder.button(text='Продолжить')
     return builder.as_markup(resize_keyboard=True, one_time_keyboard=True)
 
-def keyboard3():
+def keyboard_action():
     builder = ReplyKeyboardBuilder()
     builder.button(text='Переименовать')
     builder.button(text='Скачать')

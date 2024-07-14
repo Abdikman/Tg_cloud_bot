@@ -13,15 +13,15 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from dotenv import load_dotenv
 
-from Bot_state import file_name_input, file_action
+from Bot_states.bot_state import file_name_input, file_action
 from action import rename_file, file_to_user, delete_file
-from Keyboads import keyboard, keyboard2, keyboard3, name_inline_keyboard, MyCallback, name_inline_keyboard_date, \
+from Keyboards.Keyboads import keyboard, keyboard2, keyboard_action, name_inline_keyboard, MyCallback, name_inline_keyboard_date, \
     MyCallback_for_date, name_inline_keyboard_type, MyCallback_for_type
 from download_path import document_path, photo_path, video_path, audio_path
 from logging_history import history_update, delete_history
 
 
-load_dotenv()
+load_dotenv("config/.env")
 dp = Dispatcher()
 bot = Bot(token=os.getenv("token"), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 
@@ -134,7 +134,7 @@ async def file_path_search(message: Message, state: FSMContext):
         await state.set_state(file_action.file_path)
     else:
         await state.update_data(name=message.text)
-        await message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard3())
+        await message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard_action())
         await state.set_state(file_action.action)
 
 
@@ -191,7 +191,7 @@ async def my_callback_name(query: CallbackQuery, callback_data: MyCallback, stat
                             user_id=callback_data.user_id,
                             path_date=callback_data.path_date,
                             path_type=callback_data.path_type)
-    await query.message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard3())
+    await query.message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard_action())
     await state.set_state(file_action.action)
 
 
@@ -217,7 +217,7 @@ async def my_callback_type(query: CallbackQuery, callback_data: MyCallback_for_t
     for i in os.listdir(f'id_{callback_data.user_id}/{callback_data.path_date}/{callback_data.path_type}'):
         j = j + i + '\n'
 
-    await query.message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard3())
+    await query.message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard_action())
     await state.set_state(file_action.action)
 
 
