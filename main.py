@@ -40,13 +40,13 @@ async def command_start_handler(message: Message, state: FSMContext):
 
 @dp.message(Command('logging_history'))
 async def command_history_handler(message: Message, state: FSMContext):
-    if f'logging_history.txt' not in os.listdir(f'id_{message.from_user.id}'):
+    user_id = message.from_user.id
+    if f'{user_id}.log' not in os.listdir(f'User_logging'):
         await delete_history(message.from_user.id)
     await state.clear()
-    user_id = message.from_user.id
-    with open(f'id_{user_id}/logging_history.txt', 'r', encoding='utf-8') as file:
+    with open(f'User_logging/{user_id}.log', 'r', encoding='utf-8') as file:
         if file.read() != '':
-            await message.reply(f'{open(f"id_{user_id}/logging_history.txt", "r", encoding="utf-8").read()}')
+            await message.reply(f'{open(f"User_logging/{user_id}.log", "r", encoding="utf-8").read()}')
         else:
             await message.reply('История пуста')
 
@@ -59,6 +59,7 @@ async def command_delete_history_handler(message: Message, state: FSMContext):
     await message.answer('История очищена')
 
 
+"""Сделать инлайн клаву"""
 @dp.message(Command('search_file'))
 async def command_delete_file(message: Message, state: FSMContext):
     await state.update_data(user_id=message.from_user.id)
@@ -95,6 +96,7 @@ async def command_search_file_type(message: Message, state: FSMContext):
     await state.set_state(file_action.search_type)
 
 
+"""Сделать инлайн клаву"""
 @dp.message(file_action.path_date)
 async def search_path_date(message: Message, state: FSMContext):
     if message.text not in os.listdir(f'id_{message.from_user.id}/'):
@@ -110,6 +112,7 @@ async def search_path_date(message: Message, state: FSMContext):
         await state.set_state(file_action.path_type)
 
 
+"""Сделать инлайн клаву"""
 @dp.message(file_action.path_type)
 async def search_path_type(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -125,6 +128,7 @@ async def search_path_type(message: Message, state: FSMContext):
         await state.set_state(file_action.file_path)
 
 
+"""Сделать инлайн клаву"""
 @dp.message(file_action.file_path)
 async def file_path_search(message: Message, state: FSMContext):
     data = await state.get_data()
@@ -232,13 +236,6 @@ async def file_act(message: Message, state: FSMContext):
         case 'Скачать':
             await message.answer('Вот ваш файл:')
             await file_to_user(message, data)
-            print(f"id_{data['user_id']}/{data['path_date']}/{data['path_type']}/{data['name']}")
-            await message.reply_document(
-                document=types.FSInputFile(
-                    path=f"id_{data['user_id']}/{data['path_date']}/{data['path_type']}/{data['name']}.{data['path_type']}",
-                    filename=f"{data['name']}"
-                )
-            )
             await state.clear()
         case 'Удалить':
             await delete_file(message, data)
@@ -363,25 +360,25 @@ async def file_installer(message: Message, state: FSMContext):
                                     f"id_{user_id}/{day}/{data['file_type']}/{data['name']}.{data['file_type']}")
             await message.answer("Document received!")
             await history_update(user_id,
-                                 f"{day}:\n Пользователь установил файл. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
+                                 f"\n Пользователь установил файл. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
         case 'photo':
             await bot.download_file(data['file_path'],
                                     f"id_{user_id}/{day}/{data['file_type']}/{data['name']}.{data['file_type']}")
             await message.answer("Photo received!")
             await history_update(user_id,
-                                 f"{day}:\n Пользователь установил фото. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
+                                 f"\n Пользователь установил фото. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
         case 'video':
             await bot.download_file(data['file_path'],
                                     f"id_{user_id}/{day}/{data['file_type']}/{data['name']}.{data['file_type']}")
             await message.answer("Video received!")
             await history_update(user_id,
-                                 f"{day}:\n Пользователь установил dидео. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
+                                 f"\n Пользователь установил dидео. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
         case 'audio':
             await bot.download_file(data['file_path'],
                                     f"id_{user_id}/{day}/{data['file_type']}/{data['name']}.{data['file_type']}")
             await message.answer("Audio received!")
             await history_update(user_id,
-                                 f"{day}:\n Пользователь установил аудио. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
+                                 f"\n Пользователь установил аудио. Путь:'{day}/{data['file_type']}/{data['name']}.{data['file_type']}'")
 
     await state.clear()
 
