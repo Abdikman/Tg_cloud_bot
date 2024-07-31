@@ -13,10 +13,11 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 from dotenv import load_dotenv
 
-from Bot_states.bot_state import file_name_input, file_action
+from Bot_states.bot_state import bot_download_states, file_action
 from Handles.action import rename_file, file_to_user, delete_file
-from Keyboards.Keyboads import keyboard, keyboard2, keyboard_action, name_inline_keyboard, MyCallback, name_inline_keyboard_date, \
-    MyCallback_for_date, name_inline_keyboard_type, MyCallback_for_type
+from Keyboards.Keyboads import keyboard, keyboard2, keyboard_action
+from Keyboards.Inline_keyboard import search_name_inline_keyboard, MyCallback_for_name, search_date_inline_keyboard, \
+    MyCallback_for_date, search_type_inline_keyboard, MyCallback_for_type
 from Handles.download_path import document_path, photo_path, video_path, audio_path
 from Logging_bot.logging_history import history_update, delete_history
 
@@ -145,7 +146,7 @@ async def file_path_search(message: Message, state: FSMContext):
 @dp.message(file_action.search_name)
 async def input_name(message: Message, state: FSMContext):
     list1 = []
-    for i in os.listdir(f'id_{message.from_user.id}/')[:-1]:
+    for i in os.listdir(f'id_{message.from_user.id}/'):
         for j in os.listdir(f'id_{message.from_user.id}/{i}'):
             for c in os.listdir(f'id_{message.from_user.id}/{i}/{j}'):
                 if re.match(message.text.lower(), c.lower()) is not None:
@@ -155,29 +156,30 @@ async def input_name(message: Message, state: FSMContext):
         await state.set_state(file_action.search_name)
     else:
         await state.update_data(list1=list1)
-        await message.answer("Выберите какой именно файл вам нужен:", reply_markup=name_inline_keyboard(list1, message.from_user.id))
+        await message.answer("Выберите какой именно файл вам нужен:", reply_markup=search_name_inline_keyboard(list1,
+                                                                                                               message.from_user.id))
 
 
 @dp.message(file_action.search_type)
 async def input_type(message: Message, state: FSMContext):
     list1 = []
-    for i in os.listdir(f'id_{message.from_user.id}/')[:-1]:
+    for i in os.listdir(f'id_{message.from_user.id}/'):
         for j in os.listdir(f'id_{message.from_user.id}/{i}'):
             if re.match(message.text.lower(), j.lower()) is not None:
                 list1.append(f'id_{message.from_user.id}/{i}/{j}/')
     if len(list1) == 0:
         await message.answer("Совпадений не найдено, попробуйте снова")
-        await state.set_state(file_action.search_name)
+        await state.set_state(file_action.search_type)
     else:
         await state.update_data(list1=list1)
         await message.answer("Выберите какой именно файл вам нужен:",
-                             reply_markup=name_inline_keyboard_type(list1, message.from_user.id))
+                             reply_markup=search_type_inline_keyboard(list1, message.from_user.id))
 
 
 @dp.message(file_action.search_date)
 async def input_date(message: Message, state: FSMContext):
     list1 = []
-    for i in os.listdir(f'id_{message.from_user.id}/')[:-1]:
+    for i in os.listdir(f'id_{message.from_user.id}/'):
         if re.match(message.text.lower(), i.lower()) is not None:
             list1.append(f'id_{message.from_user.id}/{i}')
     if len(list1) == 0:
@@ -186,11 +188,11 @@ async def input_date(message: Message, state: FSMContext):
     else:
         await state.update_data(list1=list1)
         await message.answer("Выберите какой тип файла вам нужен:",
-                             reply_markup=name_inline_keyboard_date(list1, message.from_user.id))
+                             reply_markup=search_date_inline_keyboard(list1, message.from_user.id))
 
 
-@dp.callback_query(MyCallback.filter())
-async def my_callback_name(query: CallbackQuery, callback_data: MyCallback, state: FSMContext):
+@dp.callback_query(MyCallback_for_name.filter())
+async def my_callback_name(query: CallbackQuery, callback_data: MyCallback_for_name, state: FSMContext):
     await state.update_data(name=callback_data.name,
                             user_id=callback_data.user_id,
                             path_date=callback_data.path_date,
@@ -268,7 +270,7 @@ async def document_handler(message: Message, state: FSMContext):
             await state.update_data(file_type=file_type)
 
             """Спрашиваем у пользователя название файла для сохранения"""
-            await state.set_state(file_name_input.question)
+            await state.set_state(bot_download_states.question)
             await message.answer("Введите название под которым файл будет сохранён")
 
         if message.photo is not None:
@@ -277,7 +279,7 @@ async def document_handler(message: Message, state: FSMContext):
             file_path = await photo_path(message, bot)
             await state.update_data(file_path=file_path)
 
-            await state.set_state(file_name_input.question)
+            await state.set_state(bot_download_states.question)
             await message.answer("Введите название под которым фото будет сохранёно")
 
         if message.video is not None:
@@ -286,7 +288,7 @@ async def document_handler(message: Message, state: FSMContext):
             file_path = await video_path(message, bot)
             await state.update_data(file_path=file_path)
 
-            await state.set_state(file_name_input.question)
+            await state.set_state(bot_download_states.question)
             await message.answer("Введите название под которым видео будет сохранёно")
 
         if message.audio is not None:
@@ -295,14 +297,14 @@ async def document_handler(message: Message, state: FSMContext):
             file_path = await audio_path(message, bot)
             await state.update_data(file_path=file_path)
 
-            await state.set_state(file_name_input.question)
+            await state.set_state(bot_download_states.question)
             await message.answer("Введите название под которым аудио будет сохранёно")
 
     except Exception as e:
         print(e)
 
 
-@dp.message(file_name_input.question)
+@dp.message(bot_download_states.question)
 async def ask(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
 
@@ -321,33 +323,33 @@ async def ask(message: Message, state: FSMContext):
 
     if data['question'] == 0 and f'{message.text}.{data["file_type"]}' in os.listdir(
             f'id_{user_id}/{day}/{data["file_type"]}/'):
-        await state.set_state(file_name_input.all)
+        await state.set_state(bot_download_states.all)
         await message.answer("У вас есть файл под таким название. Вы уверены, что хотите заменить его?",
                              reply_markup=keyboard())
         await state.update_data(question=1)
         data = await state.get_data()
 
     if f'{message.text}.{data["file_type"]}' not in os.listdir(f'id_{user_id}/{day}/{data["file_type"]}/'):
-        await state.set_state(file_name_input.name)
+        await state.set_state(bot_download_states.name)
         await message.answer(text='Продолжите', reply_markup=keyboard2())
 
 
-@dp.message(file_name_input.all)
+@dp.message(bot_download_states.all)
 async def answer_question(message: Message, state: FSMContext):
     if message.text == 'Да':
         await message.answer("Замена...")
-        await state.set_state(file_name_input.name)
+        await state.set_state(bot_download_states.name)
         await state.update_data(question=0)
         await message.answer(text='Продолжите', reply_markup=keyboard2())
 
     if message.text == 'Нет':
         await message.answer("Напишите другое название")
         await state.update_data(question=0)
-        await state.set_state(file_name_input.question)
+        await state.set_state(bot_download_states.question)
         await message.answer(text='Продолжите', reply_markup=keyboard2())
 
 
-@dp.message(file_name_input.name)
+@dp.message(bot_download_states.name)
 async def file_installer(message: Message, state: FSMContext):
     data = await state.get_data()
 

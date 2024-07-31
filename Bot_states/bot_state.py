@@ -1,6 +1,6 @@
 from aiogram.fsm.state import StatesGroup, State
 
-class file_name_input(StatesGroup):
+class bot_download_states(StatesGroup):
     all = State()
     name = State()
     file = State()
