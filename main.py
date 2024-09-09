@@ -17,10 +17,11 @@ from Bot_states.bot_state import bot_download_states, file_action
 from Handles.action import rename_file, file_to_user, delete_file
 from Keyboards.Keyboads import keyboard, keyboard2, keyboard_action
 from Keyboards.Inline_keyboard import search_name_inline_keyboard, MyCallback_for_name, search_date_inline_keyboard, \
-    MyCallback_for_date, search_type_inline_keyboard, MyCallback_for_type
+    MyCallback_for_date, search_type_inline_keyboard, MyCallback_for_type, search_file_inline_keyboard, \
+    MyCallback_for_search, PaginationCallback_for_name, PaginationCallback_for_date, PaginationCallback_for_type, \
+    PaginationCallback_for_file
 from Handles.download_path import document_path, photo_path, video_path, audio_path
 from Logging_bot.logging_history import history_update, delete_history
-
 
 load_dotenv("config/.env")
 dp = Dispatcher()
@@ -60,17 +61,16 @@ async def command_delete_history_handler(message: Message, state: FSMContext):
     await message.answer('История очищена')
 
 
-"""Сделать инлайн клаву"""
 @dp.message(Command('search_file'))
 async def command_delete_file(message: Message, state: FSMContext):
-    await state.update_data(user_id=message.from_user.id)
-    if f'id_{message.from_user.id}' not in os.listdir():
-        os.mkdir(f"id_{message.from_user.id}")
-    await state.set_state(file_action.path_date)
-    j = str()
-    for i in os.listdir(f'id_{message.from_user.id}/')[:-1]:
-        j = j + i + '\n'
-    await message.answer(f'Укажите дату, когда файл был загружен:\n{j}')
+    list1 = []
+    page = 0
+    for i in os.listdir(f'id_{message.from_user.id}/'):
+        list1.append(f'id_{message.from_user.id}/{i}')
+
+    await state.update_data(list1=list1)
+    await message.answer("Выберите какой даты файл вам нужен:",
+                         reply_markup=search_date_inline_keyboard(list1, message.from_user.id, page))
 
 
 @dp.message(Command('search_file_name'))
@@ -97,50 +97,18 @@ async def command_search_file_type(message: Message, state: FSMContext):
     await state.set_state(file_action.search_type)
 
 
-"""Сделать инлайн клаву"""
-@dp.message(file_action.path_date)
-async def search_path_date(message: Message, state: FSMContext):
-    if message.text not in os.listdir(f'id_{message.from_user.id}/'):
-        await message.answer('Папки с такой датой нет')
-        await state.set_state(file_action.path_date)
-    else:
-        await state.update_data(path_date=message.text)
-        j = str()
-        for i in os.listdir(f'id_{message.from_user.id}/{message.text}'):
-            j = j + i + '\n'
-
-        await message.answer(f'Укажите тип файла:\n{j}')
-        await state.set_state(file_action.path_type)
-
-
-"""Сделать инлайн клаву"""
 @dp.message(file_action.path_type)
-async def search_path_type(message: Message, state: FSMContext):
-    data = await state.get_data()
-    if message.text.lower() not in os.listdir(f'id_{message.from_user.id}/{data["path_date"]}/'):
-        await message.answer('Папки с таким типом расширения нет')
-        await state.set_state(file_action.path_type)
-    else:
-        j = str()
-        for i in os.listdir(f'id_{message.from_user.id}/{data["path_date"]}/{message.text.lower()}'):
-            j = j + i.split(".")[0] + '\n'
-        await state.update_data(path_type=message.text.lower())
-        await message.answer(f'Укажите название файла:\n{j}')
-        await state.set_state(file_action.file_path)
+async def search_path_type(message: Message, state: FSMContext, callback_data: MyCallback_for_date):
+    list1 = []
+    for i in os.listdir(f'id_{callback_data.user_id}/{callback_data.path_date}'):
+        list1.append(f'id_{callback_data.user_id}/{callback_data.path_date}/{i}')
 
+    await state.update_data(path_date=callback_data.path_date,
+                            user_id=callback_data.user_id)
 
-"""Сделать инлайн клаву"""
-@dp.message(file_action.file_path)
-async def file_path_search(message: Message, state: FSMContext):
-    data = await state.get_data()
-    if message.text + '.' + data["path_type"] not in os.listdir(
-            f'id_{message.from_user.id}/{data["path_date"]}/{data["path_type"]}'):
-        await message.answer('Такого файла здесь нет')
-        await state.set_state(file_action.file_path)
-    else:
-        await state.update_data(name=message.text)
-        await message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard_action())
-        await state.set_state(file_action.action)
+    await state.update_data(list1=list1)
+    await message.answer("Выберите какой именно файл вам нужен:",
+                         reply_markup=search_type_inline_keyboard(list1, message.from_user.id))
 
 
 @dp.message(file_action.search_name)
@@ -155,25 +123,29 @@ async def input_name(message: Message, state: FSMContext):
         await message.answer("Совпадений не найдено, попробуйте снова")
         await state.set_state(file_action.search_name)
     else:
+        page = 0
         await state.update_data(list1=list1)
-        await message.answer("Выберите какой именно файл вам нужен:", reply_markup=search_name_inline_keyboard(list1,
-                                                                                                               message.from_user.id))
+        await message.answer("Выберите какой именно файл вам нужен:",
+                             reply_markup=search_name_inline_keyboard(list1, message.from_user.id, page))
 
 
 @dp.message(file_action.search_type)
 async def input_type(message: Message, state: FSMContext):
     list1 = []
+    page = 0
     for i in os.listdir(f'id_{message.from_user.id}/'):
         for j in os.listdir(f'id_{message.from_user.id}/{i}'):
             if re.match(message.text.lower(), j.lower()) is not None:
-                list1.append(f'id_{message.from_user.id}/{i}/{j}/')
+                list1.append(f'id_{message.from_user.id}/{i}/{j}')
+
     if len(list1) == 0:
         await message.answer("Совпадений не найдено, попробуйте снова")
         await state.set_state(file_action.search_type)
     else:
+        await state.set_state(file_action.search_type)
         await state.update_data(list1=list1)
         await message.answer("Выберите какой именно файл вам нужен:",
-                             reply_markup=search_type_inline_keyboard(list1, message.from_user.id))
+                             reply_markup=search_type_inline_keyboard(list1, message.from_user.id, page))
 
 
 @dp.message(file_action.search_date)
@@ -186,10 +158,47 @@ async def input_date(message: Message, state: FSMContext):
         await message.answer("Совпадений не найдено, попробуйте снова")
         await state.set_state(file_action.search_date)
     else:
+        page = 0
         await state.update_data(list1=list1)
-        await message.answer("Выберите какой тип файла вам нужен:",
-                             reply_markup=search_date_inline_keyboard(list1, message.from_user.id))
+        await message.answer("Выберите какой даты файл вам нужен:",
+                             reply_markup=search_date_inline_keyboard(list1, message.from_user.id, page))
 
+
+@dp.callback_query(PaginationCallback_for_name.filter())
+async def handle_pagination(callback: CallbackQuery, callback_data: PaginationCallback_for_name, state: FSMContext):
+    action = callback_data.action
+    page = callback_data.page
+    data = await state.get_data()
+
+    await callback.message.edit_reply_markup(reply_markup=search_name_inline_keyboard(data['list1'], data['user_id'], page))
+    await callback.answer()
+
+@dp.callback_query(PaginationCallback_for_date.filter())
+async def handle_pagination(callback: CallbackQuery, callback_data: PaginationCallback_for_name, state: FSMContext):
+    action = callback_data.action
+    page = callback_data.page
+    data = await state.get_data()
+
+    await callback.message.edit_reply_markup(reply_markup=search_date_inline_keyboard(data['list1'], data['user_id'], page))
+    await callback.answer()
+
+@dp.callback_query(PaginationCallback_for_type.filter())
+async def handle_pagination(callback: CallbackQuery, callback_data: PaginationCallback_for_name, state: FSMContext):
+    action = callback_data.action
+    page = callback_data.page
+    data = await state.get_data()
+
+    await callback.message.edit_reply_markup(reply_markup=search_type_inline_keyboard(data['list1'], data['user_id'], page))
+    await callback.answer()
+
+@dp.callback_query(PaginationCallback_for_file.filter())
+async def handle_pagination(callback: CallbackQuery, callback_data: PaginationCallback_for_name, state: FSMContext):
+    action = callback_data.action
+    page = callback_data.page
+    data = await state.get_data()
+
+    await callback.message.edit_reply_markup(reply_markup=search_file_inline_keyboard(data['list1'], data['user_id'], page))
+    await callback.answer()
 
 @dp.callback_query(MyCallback_for_name.filter())
 async def my_callback_name(query: CallbackQuery, callback_data: MyCallback_for_name, state: FSMContext):
@@ -205,25 +214,38 @@ async def my_callback_name(query: CallbackQuery, callback_data: MyCallback_for_n
 async def my_callback_date(query: CallbackQuery, callback_data: MyCallback_for_date, state: FSMContext):
     await state.update_data(path_date=callback_data.path_date,
                             user_id=callback_data.user_id)
-    j = str()
+    list1 = []
+    page = 0
     for i in os.listdir(f'id_{callback_data.user_id}/{callback_data.path_date}'):
-        j = j + i + '\n'
+        list1.append(f'id_{callback_data.user_id}/{callback_data.path_date}/{i}')
 
-    await query.message.answer(f'Укажите тип файла:\n{j}')
+    await state.update_data(list1=list1)
     await state.set_state(file_action.path_type)
+    await query.message.answer("Выберите какой тип файла вам нужен:",
+                               reply_markup=search_file_inline_keyboard(list1, query.from_user.id, page))
 
 
 @dp.callback_query(MyCallback_for_type.filter())
 async def my_callback_type(query: CallbackQuery, callback_data: MyCallback_for_type, state: FSMContext):
     await state.update_data(name=callback_data.name,
-                            user_id=callback_data.user_id,
+                            user_id=query.from_user.id,
                             path_date=callback_data.path_date,
                             path_type=callback_data.path_type)
-    j = str()
-    for i in os.listdir(f'id_{callback_data.user_id}/{callback_data.path_date}/{callback_data.path_type}'):
-        j = j + i + '\n'
 
-    await query.message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard_action())
+    await query.message.answer(text="Что вы хотите сделать с этим файлом?",
+                               reply_markup=keyboard_action())
+    await state.set_state(file_action.action)
+
+
+@dp.callback_query(MyCallback_for_search.filter())
+async def my_callback_search(query: CallbackQuery, callback_data: MyCallback_for_type, state: FSMContext):
+    await state.update_data(user_id=query.from_user.id,
+                            path_date=callback_data.path_date,
+                            path_type=callback_data.path_type)
+    list1 = [f'id_{query.from_user.id}/{callback_data.path_date}/{callback_data.path_type}']
+    page = 0
+    await query.message.answer("Выберите какой именно файл вам нужен:",
+                               reply_markup=search_type_inline_keyboard(list1, query.message.from_user.id, page))
     await state.set_state(file_action.action)
 
 

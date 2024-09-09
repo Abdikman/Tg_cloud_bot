@@ -13,7 +13,7 @@ async def file_to_user(message, data):
     await message.reply_document(
         document=types.FSInputFile(
             path=f"id_{data['user_id']}/{data['path_date']}/{data['path_type']}/{data['name']}.{data['path_type']}",
-            filename=f"{data['name']}"
+            filename=f"{data['name']}.{data['path_type']}"
         )
     )
 
