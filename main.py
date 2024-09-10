@@ -200,6 +200,7 @@ async def handle_pagination(callback: CallbackQuery, callback_data: PaginationCa
     await callback.message.edit_reply_markup(reply_markup=search_file_inline_keyboard(data['list1'], data['user_id'], page))
     await callback.answer()
 
+
 @dp.callback_query(MyCallback_for_name.filter())
 async def my_callback_name(query: CallbackQuery, callback_data: MyCallback_for_name, state: FSMContext):
     await state.update_data(name=callback_data.name,
@@ -208,7 +209,6 @@ async def my_callback_name(query: CallbackQuery, callback_data: MyCallback_for_n
                             path_type=callback_data.path_type)
     await query.message.answer(text="Что вы хотите сделать с этим файлом?", reply_markup=keyboard_action())
     await state.set_state(file_action.action)
-
 
 @dp.callback_query(MyCallback_for_date.filter())
 async def my_callback_date(query: CallbackQuery, callback_data: MyCallback_for_date, state: FSMContext):
@@ -224,7 +224,6 @@ async def my_callback_date(query: CallbackQuery, callback_data: MyCallback_for_d
     await query.message.answer("Выберите какой тип файла вам нужен:",
                                reply_markup=search_file_inline_keyboard(list1, query.from_user.id, page))
 
-
 @dp.callback_query(MyCallback_for_type.filter())
 async def my_callback_type(query: CallbackQuery, callback_data: MyCallback_for_type, state: FSMContext):
     await state.update_data(name=callback_data.name,
@@ -235,7 +234,6 @@ async def my_callback_type(query: CallbackQuery, callback_data: MyCallback_for_t
     await query.message.answer(text="Что вы хотите сделать с этим файлом?",
                                reply_markup=keyboard_action())
     await state.set_state(file_action.action)
-
 
 @dp.callback_query(MyCallback_for_search.filter())
 async def my_callback_search(query: CallbackQuery, callback_data: MyCallback_for_type, state: FSMContext):
